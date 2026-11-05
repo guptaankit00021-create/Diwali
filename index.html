@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Royal Golden Diwali</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  overflow:hidden;
+  background:radial-gradient(circle,#321000,#090000 75%);
+  color:white;
+  font-family:Georgia,serif;
+  text-align:center;
+}
+
+canvas{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:0;
+}
+
+.content{
+  position:absolute;
+  z-index:2;
+  top:8%;
+  width:100%;
+  padding:15px;
+}
+
+.logo{
+  width:min(300px,75vw);
+  max-height:100px;
+  object-fit:contain;
+  background:white;
+  padding:8px;
+  border-radius:10px;
+}
+
+h2{
+  margin-top:12px;
+  color:#fff0b0;
+  text-shadow:0 0 12px gold;
+  font-size:clamp(16px,3vw,23px);
+}
+
+h1{
+  margin-top:45px;
+  font-size:clamp(38px,8vw,85px);
+  color:#ffd700;
+  text-shadow:0 0 10px #ffb000,
+              0 0 30px #ff8c00,
+              0 0 60px #ff4500;
+  animation:glow 2s infinite alternate;
+}
+
+@keyframes glow{
+  from{filter:brightness(.8)}
+  to{filter:brightness(1.5)}
+}
+
+.department{
+  color:#ffe6a0;
+  margin-top:15px;
+  font-size:clamp(14px,3vw,22px);
+  text-shadow:0 0 12px orange;
+}
+
+.message{
+  margin-top:20px;
+  font-size:clamp(15px,3vw,22px);
+  color:#fff3d0;
+}
+
+.lamps{
+  position:absolute;
+  bottom:7%;
+  width:100%;
+  display:flex;
+  justify-content:space-evenly;
+  z-index:2;
+  font-size:clamp(40px,8vw,75px);
+}
+
+.lamp{
+  animation:flicker .8s infinite alternate;
+  filter:drop-shadow(0 0 15px orange);
+}
+
+@keyframes flicker{
+  from{transform:scale(1)}
+  to{transform:scale(1.12)}
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="fireworks"></canvas>
+
+<div class="content">
+  <img class="logo" src="shobhit-logo.jpg.jpeg"
+       alt="Shobhit University Logo">
+
+  <h2>SHOBHIT UNIVERSITY</h2>
+
+  <div class="department">
+    School of Computational Sciences and Engineering
+  </div>
+
+  <h1>HAPPY DIWALI</h1>
+
+  <div class="message">
+    May your life shine with happiness, success and prosperity!
+  </div>
+</div>
+
+<div class="lamps">
+  <div class="lamp">🪔</div>
+  <div class="lamp">🪔</div>
+  <div class="lamp">🪔</div>
+  <div class="lamp">🪔</div>
+  <div class="lamp">🪔</div>
+</div>
+
+<script>
+const canvas=document.getElementById("fireworks");
+const ctx=canvas.getContext("2d");
+
+function resize(){
+  canvas.width=innerWidth;
+  canvas.height=innerHeight;
+}
+resize();
+addEventListener("resize",resize);
+
+let particles=[];
+
+function burst(x,y){
+  const colors=["#ffd700","#ff9900","#ff4500","#fff4b0"];
+
+  for(let i=0;i<90;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=Math.random()*5+1;
+
+    particles.push({
+      x,y,
+      vx:Math.cos(angle)*speed,
+      vy:Math.sin(angle)*speed,
+      life:90,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      size:Math.random()*3+1
+    });
+  }
+}
+
+function animate(){
+  ctx.fillStyle="rgba(10,0,0,0.18)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  particles.forEach((p,i)=>{
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.vy+=0.035;
+    p.life--;
+
+    ctx.globalAlpha=Math.max(0,p.life/90);
+    ctx.fillStyle=p.color;
+    ctx.shadowBlur=15;
+    ctx.shadowColor=p.color;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+    ctx.fill();
+
+    if(p.life<=0)particles.splice(i,1);
+  });
+
+  ctx.globalAlpha=1;
+  ctx.shadowBlur=0;
+  requestAnimationFrame(animate);
+}
+
+animate();
+
+function randomBurst(){
+  burst(
+    Math.random()*canvas.width,
+    Math.random()*canvas.height*.65
+  );
+}
+
+setInterval(randomBurst,850);
+
+// Sound starts after the first user interaction.
+// Browsers block automatic audible playback before interaction.
+let audioStarted=false;
+let audioCtx;
+
+function startSound(){
+  if(audioStarted)return;
+  audioStarted=true;
+
+  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+
+  function pop(){
+    if(!audioCtx)return;
+
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+
+    osc.type="triangle";
+    osc.frequency.setValueAtTime(150,audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(
+      45,audioCtx.currentTime+.12
+    );
+
+    gain.gain.setValueAtTime(.16,audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      .001,audioCtx.currentTime+.15
+    );
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime+.16);
+  }
+
+  setInterval(pop,950);
+}
+
+addEventListener("pointerdown",startSound,{once:true});
+addEventListener("keydown",startSound,{once:true});
+</script>
+
+</body>
+</html>
